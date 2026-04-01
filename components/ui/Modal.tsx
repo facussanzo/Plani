@@ -13,10 +13,10 @@ interface ModalProps {
 }
 
 const sizeClasses = {
-  sm: 'max-w-sm',
-  md: 'max-w-lg',
-  lg: 'max-w-2xl',
-  xl: 'max-w-4xl',
+  sm: 'sm:max-w-sm',
+  md: 'sm:max-w-lg',
+  lg: 'sm:max-w-2xl',
+  xl: 'sm:max-w-4xl',
 }
 
 export default function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalProps) {
@@ -44,33 +44,50 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' }:
   if (!isOpen) return null
 
   return (
-    <div className="modal-overlay animate-fade-in" onClick={onClose}>
+    <div
+      className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end sm:items-center sm:justify-center sm:p-4 animate-fade-in"
+      onClick={onClose}
+    >
       <div
-        className={clsx('modal-content animate-slide-up w-full', sizeClasses[size])}
+        className={clsx(
+          // Mobile: full-width bottom sheet
+          'w-full bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl',
+          // Mobile: slide up, limit height
+          'max-h-[95dvh] overflow-y-auto',
+          // Desktop: centered with max-width
+          'sm:w-full',
+          sizeClasses[size],
+          'animate-slide-up'
+        )}
         onClick={e => e.stopPropagation()}
       >
+        {/* Drag handle (mobile only) */}
+        <div className="flex justify-center pt-3 pb-0 sm:hidden">
+          <div className="w-10 h-1 rounded-full bg-gray-200" />
+        </div>
+
         {title && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
             <h2 className="text-base font-semibold text-gray-900">{title}</h2>
             <button
               onClick={onClose}
-              className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
             >
-              <X size={16} />
+              <X size={18} />
             </button>
           </div>
         )}
         {!title && (
-          <div className="flex justify-end px-4 pt-4 pb-0">
+          <div className="flex justify-end px-4 pt-3 pb-0">
             <button
               onClick={onClose}
-              className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
             >
-              <X size={16} />
+              <X size={18} />
             </button>
           </div>
         )}
-        <div className="px-6 py-4">{children}</div>
+        <div className="px-5 py-4 pb-safe-bottom">{children}</div>
       </div>
     </div>
   )

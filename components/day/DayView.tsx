@@ -176,57 +176,58 @@ export default function DayView({ dateStr }: DayViewProps) {
   }
 
   return (
-    <div className="p-8 max-w-3xl">
+    <div className="p-4 sm:p-8 max-w-3xl">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between mb-5 sm:mb-6">
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
           <button
             onClick={() => navigateDay(-1)}
-            className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
           >
             <ChevronLeft size={18} />
           </button>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-gray-900 capitalize">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-base sm:text-xl font-bold text-gray-900 capitalize">
                 {format(date, "EEEE, d 'de' MMMM", { locale: es })}
               </h1>
               {isTodayDate && (
-                <span className="text-xs font-semibold bg-gray-900 text-white px-2 py-0.5 rounded-full">
+                <span className="text-xs font-semibold bg-gray-900 text-white px-2 py-0.5 rounded-full flex-shrink-0">
                   Hoy
                 </span>
               )}
             </div>
-            <p className="text-sm text-gray-400">
+            <p className="text-xs sm:text-sm text-gray-400">
               {tasks.length} {tasks.length === 1 ? 'tarea' : 'tareas'}
             </p>
           </div>
           <button
             onClick={() => navigateDay(1)}
-            className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
           >
             <ChevronRight size={18} />
           </button>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button variant="secondary" size="sm" onClick={() => router.push('/calendar')}>
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+          <Button variant="secondary" size="sm" onClick={() => router.push('/calendar')} className="hidden sm:inline-flex">
             <CalendarDays size={14} />
             Calendario
           </Button>
           <button
             onClick={() => openNew(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-medium rounded-lg hover:bg-gray-200 transition-colors"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-medium rounded-lg hover:bg-gray-200 transition-colors"
           >
             <CalendarDays size={13} />
             Nuevo evento
           </button>
           <button
             onClick={() => openNew(false)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-lg hover:bg-gray-800 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-2 sm:py-1.5 bg-gray-900 text-white text-xs font-medium rounded-lg hover:bg-gray-800 transition-colors"
           >
-            <Plus size={13} />
-            Nueva tarea
+            <Plus size={14} />
+            <span className="hidden sm:inline">Nueva tarea</span>
+            <span className="sm:hidden">Nueva</span>
           </button>
         </div>
       </div>

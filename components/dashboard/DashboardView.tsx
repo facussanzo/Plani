@@ -126,60 +126,61 @@ export default function DashboardView() {
   }
 
   return (
-    <div className="p-8 max-w-5xl">
+    <div className="p-4 sm:p-8 max-w-5xl">
       {/* Header */}
-      <div className="flex items-start justify-between mb-8">
+      <div className="flex items-start justify-between mb-6 sm:mb-8">
         <div>
-          <p className="text-sm text-gray-400 font-medium mb-1">
+          <p className="text-xs sm:text-sm text-gray-400 font-medium mb-1 capitalize">
             {format(today, "EEEE, d 'de' MMMM yyyy", { locale: es })}
           </p>
-          <h1 className="text-2xl font-bold text-gray-900">{getGreeting()} 👋</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{getGreeting()} 👋</h1>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <button
             onClick={() => { setModalIsEvent(true); setModalOpen(true) }}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors"
           >
             <CalendarDays size={14} />
             Nuevo evento
           </button>
           <Button onClick={() => { setModalIsEvent(false); setModalOpen(true) }}>
             <Plus size={16} />
-            Nueva tarea
+            <span className="hidden sm:inline">Nueva tarea</span>
+            <span className="sm:hidden">Nueva</span>
           </Button>
         </div>
       </div>
 
       {/* Quick stats */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        <div className="card">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Hoy</p>
-            <CheckCircle2 size={16} className="text-green-400" />
+      <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6 sm:mb-8">
+        <div className="card !p-3 sm:!p-4">
+          <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+            <p className="text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wide">Hoy</p>
+            <CheckCircle2 size={14} className="text-green-400" />
           </div>
-          <p className="text-2xl font-bold text-gray-900">{doneToday}/{totalToday}</p>
-          <p className="text-xs text-gray-400 mt-1">tareas completadas</p>
+          <p className="text-xl sm:text-2xl font-bold text-gray-900">{doneToday}/{totalToday}</p>
+          <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5 sm:mt-1">completadas</p>
           {totalToday > 0 && (
-            <ProgressBar current={doneToday} total={totalToday} color="blue" size="sm" className="mt-2" />
+            <ProgressBar current={doneToday} total={totalToday} color="blue" size="sm" className="mt-1.5 sm:mt-2" />
           )}
         </div>
 
-        <div className="card">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Próximos 7 días</p>
-            <Clock size={16} className="text-amber-400" />
+        <div className="card !p-3 sm:!p-4">
+          <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+            <p className="text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wide leading-tight">7 días</p>
+            <Clock size={14} className="text-amber-400" />
           </div>
-          <p className="text-2xl font-bold text-gray-900">{upcomingTasks.length}</p>
-          <p className="text-xs text-gray-400 mt-1">tareas pendientes</p>
+          <p className="text-xl sm:text-2xl font-bold text-gray-900">{upcomingTasks.length}</p>
+          <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5 sm:mt-1">pendientes</p>
         </div>
 
-        <div className="card">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Vencidas</p>
-            <AlertCircle size={16} className="text-red-400" />
+        <div className="card !p-3 sm:!p-4">
+          <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+            <p className="text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wide">Vencidas</p>
+            <AlertCircle size={14} className="text-red-400" />
           </div>
-          <p className="text-2xl font-bold text-gray-900">{overdueTasks.length}</p>
-          <p className="text-xs text-gray-400 mt-1">requieren atención</p>
+          <p className="text-xl sm:text-2xl font-bold text-gray-900">{overdueTasks.length}</p>
+          <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5 sm:mt-1">atención</p>
         </div>
       </div>
 
@@ -208,7 +209,7 @@ export default function DashboardView() {
                   key={task.id}
                   className="bg-white border border-red-100 rounded-xl shadow-soft overflow-hidden"
                 >
-                  <div className="flex items-center gap-3 px-4 py-2.5">
+                  <div className="flex items-center gap-2 px-3 sm:px-4 py-2.5">
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-800 truncate">{task.title}</p>
                       <p className="text-xs text-red-400 mt-0.5">
@@ -219,10 +220,10 @@ export default function DashboardView() {
                       <button
                         onClick={() => handleOverdueMoveToday(task)}
                         title="Mover a hoy"
-                        className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors"
+                        className="flex items-center gap-1 px-2 py-1.5 text-[11px] font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors"
                       >
-                        <SkipForward size={11} />
-                        Hoy
+                        <SkipForward size={12} />
+                        <span className="hidden sm:inline">Hoy</span>
                       </button>
                       <button
                         onClick={() => {
@@ -236,28 +237,28 @@ export default function DashboardView() {
                         }}
                         title="Reprogramar"
                         className={clsx(
-                          'flex items-center gap-1 px-2 py-1 text-[11px] font-medium rounded-lg transition-colors',
+                          'flex items-center gap-1 px-2 py-1.5 text-[11px] font-medium rounded-lg transition-colors',
                           reschedulingId === task.id
                             ? 'bg-blue-100 text-blue-700'
                             : 'text-gray-500 bg-gray-50 hover:bg-blue-50 hover:text-blue-700'
                         )}
                       >
-                        <Calendar size={11} />
-                        Reprogramar
+                        <Calendar size={12} />
+                        <span className="hidden sm:inline">Reprogramar</span>
                       </button>
                       <button
                         onClick={() => handleOverdueComplete(task)}
-                        title="Marcar como completada"
-                        className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                        title="Completada"
+                        className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                       >
-                        <CheckCircle2 size={14} />
+                        <CheckCircle2 size={15} />
                       </button>
                       <button
                         onClick={() => handleOverdueCancel(task)}
-                        title="Cancelar tarea"
-                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Cancelar"
+                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                       >
-                        <Trash2 size={14} />
+                        <Trash2 size={15} />
                       </button>
                     </div>
                   </div>
@@ -293,9 +294,9 @@ export default function DashboardView() {
         </div>
       )}
 
-      <div className="grid grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 lg:gap-6">
         {/* Today tasks */}
-        <div className="col-span-3">
+        <div className="lg:col-span-3">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-semibold text-gray-900">Tareas de hoy</h2>
             <Link
@@ -361,7 +362,7 @@ export default function DashboardView() {
         </div>
 
         {/* Right panel */}
-        <div className="col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4 lg:space-y-6">
           {/* Area breakdown */}
           {tasksByType.length > 0 && (
             <div className="card">

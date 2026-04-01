@@ -6,6 +6,16 @@
   --sidebar-width: 240px;
 }
 
+/* Safe-area padding utilities for notch/home-bar devices */
+.pb-safe-bottom {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 4rem); /* 4rem = bottom nav height */
+}
+@media (min-width: 1024px) {
+  .pb-safe-bottom {
+    padding-bottom: 0;
+  }
+}
+
 * {
   box-sizing: border-box;
 }
@@ -83,7 +93,9 @@ button, a, [role="button"] {
   }
 
   .input {
-    @apply w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-150;
+    @apply w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-150;
+    /* Prevent iOS zoom on input focus */
+    font-size: max(16px, 1em);
   }
 
   .label {
