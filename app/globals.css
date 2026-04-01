@@ -1,0 +1,207 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --sidebar-width: 240px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  @apply bg-gray-50 text-gray-900;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-200 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-300;
+}
+
+/* Smooth transitions for interactive elements */
+button, a, [role="button"] {
+  @apply transition-all duration-150;
+}
+
+/* Focus styles */
+:focus-visible {
+  @apply outline-none ring-2 ring-blue-500 ring-offset-2;
+}
+
+/* Custom layer for component styles */
+@layer components {
+  .sidebar-link {
+    @apply flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all duration-150 cursor-pointer;
+  }
+
+  .sidebar-link.active {
+    @apply bg-gray-100 text-gray-900;
+  }
+
+  .card {
+    @apply bg-white rounded-xl shadow-soft border border-gray-100 p-4;
+  }
+
+  .task-card {
+    @apply bg-white rounded-xl border border-gray-100 p-3 shadow-soft hover:shadow-card transition-all duration-150 cursor-pointer;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center gap-2 px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center gap-2 px-4 py-2 bg-white text-gray-700 text-sm font-medium rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center gap-2 px-3 py-2 text-gray-500 text-sm font-medium rounded-lg hover:bg-gray-100 hover:text-gray-700 transition-colors duration-150;
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center gap-2 px-3 py-2 text-red-600 text-sm font-medium rounded-lg hover:bg-red-50 transition-colors duration-150;
+  }
+
+  .input {
+    @apply w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-150;
+  }
+
+  .label {
+    @apply block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide;
+  }
+
+  .section-title {
+    @apply text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3;
+  }
+
+  .badge-university {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded-full;
+  }
+
+  .badge-work {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-medium rounded-full;
+  }
+
+  .badge-objective {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 bg-purple-100 text-purple-700 text-xs font-medium rounded-full;
+  }
+
+  .badge-recurring {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-medium rounded-full;
+  }
+
+  /* Calendar styles */
+  .calendar-day {
+    @apply min-h-[100px] p-1.5 border-b border-r border-gray-100 relative hover:bg-gray-50 transition-colors duration-100 cursor-pointer;
+  }
+
+  .calendar-day.today {
+    @apply bg-blue-50;
+  }
+
+  .calendar-day.other-month {
+    @apply bg-gray-50 opacity-50;
+  }
+
+  /* Drag and drop styles */
+  .dragging {
+    @apply opacity-50 scale-95;
+  }
+
+  .drag-over {
+    @apply ring-2 ring-blue-400 ring-inset;
+  }
+
+  /* Skeleton loader */
+  .skeleton {
+    @apply animate-pulse bg-gray-200 rounded;
+  }
+
+  /* Time grid */
+  .time-slot {
+    @apply flex items-start gap-2 min-h-[48px] border-b border-gray-50 px-4 py-1;
+  }
+
+  /* Modal */
+  .modal-overlay {
+    @apply fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4;
+  }
+
+  .modal-content {
+    @apply bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(8px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(8px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.25s ease-out;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.25s ease-out;
+}
+
+/* Progress bar animation */
+.progress-bar-fill {
+  transition: width 0.5s ease-in-out;
+}
+
+/* Type indicator bar on left side of task card */
+.task-type-bar {
+  @apply absolute left-0 top-0 bottom-0 w-1 rounded-l-xl;
+}
+
+/* Drag handle */
+.drag-handle {
+  @apply cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 transition-colors;
+}
+
+/* Week grid for blocks */
+.week-grid {
+  display: grid;
+  grid-template-columns: 60px repeat(7, 1fr);
+  @apply border border-gray-200 rounded-xl overflow-hidden;
+}
+
+.week-grid-cell {
+  @apply border-r border-b border-gray-100 min-h-[32px] relative;
+}

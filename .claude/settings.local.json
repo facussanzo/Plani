@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p \"C:/Users/Z0058WUK/OneDrive - Siemens Energy/Desktop/Facundo/Plani/lib\")",
+      "Bash(mkdir -p \"C:/Users/Z0058WUK/OneDrive - Siemens Energy/Desktop/Facundo/Plani/hooks\")",
+      "Bash(mkdir -p \"C:/Users/Z0058WUK/OneDrive - Siemens Energy/Desktop/Facundo/Plani/app/calendar\")",
+      "Bash(mkdir -p \"C:/Users/Z0058WUK/OneDrive - Siemens Energy/Desktop/Facundo/Plani/app/day/[date]\")",
+      "Bash(mkdir -p \"C:/Users/Z0058WUK/OneDrive - Siemens Energy/Desktop/Facundo/Plani/app/lists\")",
+      "Bash(npx tsc:*)",
+      "Bash(npx next:*)",
+      "Bash(find '/c/Users/Z0058WUK/OneDrive - Siemens Energy/Desktop/Facundo/Plani/app' -name *.tsx -o -name *.ts)",
+      "Bash(find '/c/Users/Z0058WUK/OneDrive - Siemens Energy/Desktop/Facundo/Plani/components' -name *.tsx)",
+      "Bash(grep -r objective '/c/Users/Z0058WUK/OneDrive - Siemens Energy/Desktop/Facundo/Plani' --include=*.ts --include=*.tsx --include=*.sql)",
+      "Bash(grep -r objective '/c/Users/Z0058WUK/OneDrive - Siemens Energy/Desktop/Facundo/Plani' --include=*.ts --include=*.tsx)"
+    ]
+  }
+}
