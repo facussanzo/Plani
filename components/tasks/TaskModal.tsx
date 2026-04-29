@@ -551,6 +551,8 @@ export default function TaskModal({
     form.type === 'work' ? 'work' :
     form.type === 'personal' ? 'personal' : 'general'
 
+  const isEntrega = ['TP', 'Parcial', 'Proyecto'].includes(form.category ?? '')
+
   return (
     <Modal
       isOpen={isOpen}
@@ -560,8 +562,8 @@ export default function TaskModal({
     >
       <form onSubmit={handleSubmit} className="space-y-4">
 
-        {/* ── Event toggle (prominent at top for new items) ── */}
-        {!initialTask && (
+        {/* ── Event toggle — hidden for entregas ── */}
+        {!initialTask && !isEntrega && (
           <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-xl">
             <button
               type="button"
@@ -612,7 +614,12 @@ export default function TaskModal({
               <button
                 key={value}
                 type="button"
-                onClick={() => { update('type', value); update('tag_ids', []) }}
+                onClick={() => {
+                  update('type', value)
+                  update('tag_ids', [])
+                  update('subject_id', null)
+                  if (value !== 'university') update('category', '')
+                }}
                 className={clsx(
                   'flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-semibold transition-all',
                   form.type === value
@@ -687,16 +694,20 @@ export default function TaskModal({
         {form.type === 'university' && (
           <div>
             <label className="label">Tipo de entrega</label>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               {[
                 { value: '', label: 'Tarea', cls: 'border-gray-900 bg-gray-900 text-white' },
                 { value: 'TP', label: 'TP', cls: 'border-orange-500 bg-orange-500 text-white' },
                 { value: 'Parcial', label: 'Parcial', cls: 'border-red-500 bg-red-500 text-white' },
+                { value: 'Proyecto', label: 'Proyecto', cls: 'border-violet-500 bg-violet-500 text-white' },
               ].map(opt => (
                 <button
                   key={opt.value}
                   type="button"
-                  onClick={() => update('category', opt.value)}
+                  onClick={() => {
+                    update('category', opt.value)
+                    if (opt.value) update('is_event', false)
+                  }}
                   className={clsx(
                     'px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all',
                     form.category === opt.value
@@ -736,25 +747,37 @@ export default function TaskModal({
         </div>
 
         {/* ── Dates ── */}
-        <div className="space-y-1.5">
-          {form.is_recurring && (
-            <p className="text-xs text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
-              Rango de recurrencia: la tarea se repetirá entre estas fechas.
-            </p>
-          )}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="label">{form.is_recurring ? 'Inicio recurrencia *' : 'Fecha inicio'}</label>
-              <input className="input" type="date" value={form.start_date ?? ''}
-                onChange={e => update('start_date', e.target.value)} />
-            </div>
-            <div>
-              <label className="label">{form.is_recurring ? 'Fin recurrencia *' : 'Fecha límite'}</label>
-              <input className="input" type="date" value={form.deadline ?? ''}
-                onChange={e => update('deadline', e.target.value)} />
+        {isEntrega ? (
+          <div>
+            <label className="label">Fecha de entrega</label>
+            <input
+              className="input"
+              type="date"
+              value={form.deadline ?? ''}
+              onChange={e => { update('deadline', e.target.value); update('start_date', e.target.value) }}
+            />
+          </div>
+        ) : (
+          <div className="space-y-1.5">
+            {form.is_recurring && (
+              <p className="text-xs text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
+                Rango de recurrencia: la tarea se repetirá entre estas fechas.
+              </p>
+            )}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="label">{form.is_recurring ? 'Inicio recurrencia *' : 'Fecha inicio'}</label>
+                <input className="input" type="date" value={form.start_date ?? ''}
+                  onChange={e => update('start_date', e.target.value)} />
+              </div>
+              <div>
+                <label className="label">{form.is_recurring ? 'Fin recurrencia *' : 'Fecha límite'}</label>
+                <input className="input" type="date" value={form.deadline ?? ''}
+                  onChange={e => update('deadline', e.target.value)} />
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* ── Time + Status ── */}
         <div className="grid grid-cols-2 gap-3">

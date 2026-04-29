@@ -111,6 +111,8 @@ function SubjectManager({
   )
 }
 
+const SPECIAL_CATS = new Set(['TP', 'Parcial', 'Proyecto'])
+
 // ------- Main Component -------
 export default function ListView({ initialTab = 'university' }: ListViewProps) {
   const [area, setArea] = useState<Area>(initialTab)
@@ -150,29 +152,19 @@ export default function ListView({ initialTab = 'university' }: ListViewProps) {
     setActiveSubjectId(null)
   }, [area])
 
-  // Filter and sort
-  const filtered = useMemo(() => {
-    let result = [...tasks]
-
-    // Subject/topic filter
-    if (activeSubjectId !== null) {
-      result = result.filter(t => t.subject_id === activeSubjectId)
-    }
-
-    if (filterStatus !== 'all') {
-      result = result.filter(t => t.status === filterStatus)
-    }
-
+  // Tasks (non-events): filtered by subject, status, search, sorted
+  const filteredTasks = useMemo(() => {
+    let result = tasks.filter(t => !t.is_event)
+    if (activeSubjectId !== null) result = result.filter(t => t.subject_id === activeSubjectId)
+    if (filterStatus !== 'all') result = result.filter(t => t.status === filterStatus)
     if (search.trim()) {
       const q = search.toLowerCase()
-      result = result.filter(
-        t =>
-          t.title.toLowerCase().includes(q) ||
-          t.category?.toLowerCase().includes(q) ||
-          t.description?.toLowerCase().includes(q)
+      result = result.filter(t =>
+        t.title.toLowerCase().includes(q) ||
+        t.category?.toLowerCase().includes(q) ||
+        t.description?.toLowerCase().includes(q)
       )
     }
-
     result.sort((a, b) => {
       if (sortBy === 'deadline') {
         if (!a.deadline) return 1
@@ -182,23 +174,48 @@ export default function ListView({ initialTab = 'university' }: ListViewProps) {
       if (sortBy === 'name') return a.title.localeCompare(b.title)
       return b.created_at.localeCompare(a.created_at)
     })
-
     return result
-  }, [tasks, area, activeSubjectId, filterStatus, search, sortBy])
+  }, [tasks, activeSubjectId, filterStatus, search, sortBy])
 
-  // Separate events from tasks
-  const filteredEvents = useMemo(() => filtered.filter(t => t.is_event), [filtered])
-  const filteredTasks = useMemo(() => filtered.filter(t => !t.is_event), [filtered])
+  // Events: NOT filtered by subject (show all area events), filtered by status+search
+  const filteredEvents = useMemo(() => {
+    let result = tasks.filter(t => t.is_event)
+    if (filterStatus !== 'all') result = result.filter(t => t.status === filterStatus)
+    if (search.trim()) {
+      const q = search.toLowerCase()
+      result = result.filter(t => t.title.toLowerCase().includes(q))
+    }
+    result.sort((a, b) => {
+      if (!a.deadline) return 1
+      if (!b.deadline) return -1
+      return a.deadline.localeCompare(b.deadline)
+    })
+    return result
+  }, [tasks, filterStatus, search])
+
+  // Separate entregas (TP/Parcial/Proyecto) from regular tasks
+  const entregasTasks = useMemo(() => filteredTasks.filter(t => SPECIAL_CATS.has(t.category ?? '')), [filteredTasks])
+  const regularTasks = useMemo(() => filteredTasks.filter(t => !SPECIAL_CATS.has(t.category ?? '')), [filteredTasks])
 
   const grouped = useMemo(() => {
     const groups: Record<string, Task[]> = {}
-    for (const task of filteredTasks) {
+    for (const task of regularTasks) {
       const key = task.category || 'General'
       if (!groups[key]) groups[key] = []
       groups[key].push(task)
     }
     return groups
-  }, [filteredTasks])
+  }, [regularTasks])
+
+  const entregasGrouped = useMemo(() => {
+    const groups: Record<string, Task[]> = {}
+    for (const task of entregasTasks) {
+      const key = task.category || 'TP'
+      if (!groups[key]) groups[key] = []
+      groups[key].push(task)
+    }
+    return groups
+  }, [entregasTasks])
 
   const handleSave = async (data: TaskFormData) => {
     if (editingTask) {
@@ -224,29 +241,44 @@ export default function ListView({ initialTab = 'university' }: ListViewProps) {
     setTasks(prev => prev.filter(t => t.id !== id))
   }
 
-  const totalByStatus = {
-    all: tasks.length,
-    pending: tasks.filter(t => t.status === 'pending').length,
-    in_progress: tasks.filter(t => t.status === 'in_progress').length,
-    done: tasks.filter(t => t.status === 'done').length,
-  }
-
   // Subjects filtered by current area
   const subjectsForArea = useMemo(() =>
     subjects.filter(s => (s.area ?? 'university') === area),
     [subjects, area]
   )
 
-  // Subjects with PENDING task counts only
+  // Base for counts: non-events, filtered by subject + search, NOT filtered by status
+  const baseForCounts = useMemo(() => {
+    let result = tasks.filter(t => !t.is_event)
+    if (activeSubjectId !== null) result = result.filter(t => t.subject_id === activeSubjectId)
+    if (search.trim()) {
+      const q = search.toLowerCase()
+      result = result.filter(t =>
+        t.title.toLowerCase().includes(q) ||
+        t.category?.toLowerCase().includes(q) ||
+        t.description?.toLowerCase().includes(q)
+      )
+    }
+    return result
+  }, [tasks, activeSubjectId, search])
+
+  const totalByStatus = {
+    all: baseForCounts.length,
+    pending: baseForCounts.filter(t => t.status === 'pending').length,
+    in_progress: baseForCounts.filter(t => t.status === 'in_progress').length,
+    done: baseForCounts.filter(t => t.status === 'done').length,
+  }
+
+  // Subjects with PENDING non-event task counts
   const subjectsWithCount = useMemo(() =>
     subjectsForArea.map(s => ({
       ...s,
-      count: tasks.filter(t => t.subject_id === s.id && t.status !== 'done' && t.status !== 'cancelled').length,
+      count: tasks.filter(t => t.subject_id === s.id && !t.is_event && t.status !== 'done' && t.status !== 'cancelled').length,
     })),
     [subjectsForArea, tasks]
   )
 
-  const allTasksCount = tasks.filter(t => t.status !== 'done' && t.status !== 'cancelled').length
+  const allTasksCount = tasks.filter(t => !t.is_event && t.status !== 'done' && t.status !== 'cancelled').length
 
   const isUniversity = area === 'university'
   const hasTopics = area === 'work' || area === 'personal'
@@ -427,7 +459,7 @@ export default function ListView({ initialTab = 'university' }: ListViewProps) {
           <div className="space-y-2">
             {[1, 2, 3, 4].map(i => <div key={i} className="skeleton h-16 rounded-xl" />)}
           </div>
-        ) : filtered.length === 0 ? (
+        ) : (filteredTasks.length === 0 && filteredEvents.length === 0) ? (
           <div className="text-center py-16">
             <p className="text-4xl mb-3">{area === 'university' ? '🎓' : area === 'work' ? '💼' : '👤'}</p>
             <p className="text-sm text-gray-500">
@@ -442,65 +474,77 @@ export default function ListView({ initialTab = 'university' }: ListViewProps) {
           </div>
         ) : (
           <div className="space-y-6">
-            {Object.entries(grouped).map(([category, categoryTasks]) => {
-              const isTP = category === 'TP'
-              const isParcial = category === 'Parcial'
-              const isSpecial = isTP || isParcial
-              return (
-                <div key={category}>
-                  <div className={clsx(
-                    'flex items-center gap-2 mb-2',
-                    isSpecial && 'px-3 py-1.5 rounded-lg -mx-3',
-                    isTP && 'bg-orange-50',
-                    isParcial && 'bg-red-50',
-                  )}>
-                    {isSpecial && (
-                      <span className={clsx(
-                        'text-[10px] font-bold px-2 py-0.5 rounded-full text-white',
-                        isTP ? 'bg-orange-500' : 'bg-red-500'
-                      )}>
-                        {category}
-                      </span>
-                    )}
-                    <span className={clsx(
-                      'text-xs font-semibold uppercase tracking-wider',
-                      isTP ? 'text-orange-600' : isParcial ? 'text-red-600' : 'text-gray-400'
-                    )}>
-                      {isSpecial ? '' : category}
-                    </span>
-                    <span className={clsx(
-                      'text-xs',
-                      isTP ? 'text-orange-400' : isParcial ? 'text-red-400' : 'text-gray-300'
-                    )}>
-                      ({categoryTasks.length})
-                    </span>
-                  </div>
-                  <div className="space-y-2">
-                    {categoryTasks.map(task => (
-                      <TaskCard
-                        key={task.id}
-                        task={task}
-                        subject={subjectFor(task)}
-                        expandable
-                        hideAreaBadge
-                        onToggleStatus={() => handleToggle(task)}
-                        onEdit={() => { setEditingTask(task); setModalOpen(true) }}
-                        onDelete={() => handleDelete(task.id)}
-                        onUpdateTask={async (updates) => {
-                          const updated = await updateTask(task.id, updates)
-                          setTasks(prev => prev.map(t => t.id === updated.id ? updated : t))
-                        }}
-                      />
-                    ))}
-                  </div>
+            {/* ── Entregas: TPs / Parciales / Proyectos ── */}
+            {entregasTasks.length > 0 && (
+              <div className="rounded-xl border border-orange-100 bg-orange-50/50 p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-orange-700 uppercase tracking-wider">Entregas</span>
+                  <span className="text-xs text-orange-400">({entregasTasks.length})</span>
                 </div>
-              )
-            })}
+                {Object.entries(entregasGrouped).map(([cat, catTasks]) => {
+                  const catColor = cat === 'TP' ? 'bg-orange-500' : cat === 'Parcial' ? 'bg-red-500' : 'bg-violet-500'
+                  return (
+                    <div key={cat}>
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full text-white ${catColor}`}>{cat}</span>
+                        <span className="text-xs text-gray-400">({catTasks.length})</span>
+                      </div>
+                      <div className="space-y-1.5">
+                        {catTasks.map(task => (
+                          <TaskCard
+                            key={task.id}
+                            task={task}
+                            subject={subjectFor(task)}
+                            expandable
+                            hideAreaBadge
+                            onToggleStatus={() => handleToggle(task)}
+                            onEdit={() => { setEditingTask(task); setModalOpen(true) }}
+                            onDelete={() => handleDelete(task.id)}
+                            onUpdateTask={async (updates) => {
+                              const updated = await updateTask(task.id, updates)
+                              setTasks(prev => prev.map(t => t.id === updated.id ? updated : t))
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
 
-            {/* Events section */}
+            {/* ── Regular tasks ── */}
+            {Object.entries(grouped).map(([category, categoryTasks]) => (
+              <div key={category}>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{category}</span>
+                  <span className="text-xs text-gray-300">({categoryTasks.length})</span>
+                </div>
+                <div className="space-y-2">
+                  {categoryTasks.map(task => (
+                    <TaskCard
+                      key={task.id}
+                      task={task}
+                      subject={subjectFor(task)}
+                      expandable
+                      hideAreaBadge
+                      onToggleStatus={() => handleToggle(task)}
+                      onEdit={() => { setEditingTask(task); setModalOpen(true) }}
+                      onDelete={() => handleDelete(task.id)}
+                      onUpdateTask={async (updates) => {
+                        const updated = await updateTask(task.id, updates)
+                        setTasks(prev => prev.map(t => t.id === updated.id ? updated : t))
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+
+            {/* ── Events section ── */}
             {filteredEvents.length > 0 && (
-              <div>
-                <div className="flex items-center gap-2 mb-2 mt-4 pt-4 border-t border-gray-100">
+              <div className={clsx((entregasTasks.length > 0 || Object.keys(grouped).length > 0) && 'mt-4 pt-4 border-t border-gray-100')}>
+                <div className="flex items-center gap-2 mb-2">
                   <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Eventos</span>
                   <span className="text-xs text-gray-300">({filteredEvents.length})</span>
                 </div>
