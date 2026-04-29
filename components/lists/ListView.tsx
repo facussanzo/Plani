@@ -217,6 +217,14 @@ export default function ListView({ initialTab = 'university' }: ListViewProps) {
     return groups
   }, [entregasTasks])
 
+  // Color for entregas container: prefer active subject, else common subject among entregas
+  const entregasColor = useMemo(() => {
+    if (activeSubjectId) return subjects.find(s => s.id === activeSubjectId)?.color ?? null
+    const allColors = entregasTasks.map(t => subjects.find(s => s.id === t.subject_id)?.color).filter((c): c is string => !!c)
+    const colors = allColors.filter((c, i) => allColors.indexOf(c) === i)
+    return colors.length === 1 ? colors[0] : null
+  }, [activeSubjectId, entregasTasks, subjects])
+
   const handleSave = async (data: TaskFormData) => {
     if (editingTask) {
       const updated = await updateTask(editingTask.id, data)
@@ -474,12 +482,51 @@ export default function ListView({ initialTab = 'university' }: ListViewProps) {
           </div>
         ) : (
           <div className="space-y-6">
+            {/* ── Regular tasks ── */}
+            {Object.entries(grouped).map(([category, categoryTasks]) => (
+              <div key={category}>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{category}</span>
+                  <span className="text-xs text-gray-300">({categoryTasks.length})</span>
+                </div>
+                <div className="space-y-2">
+                  {categoryTasks.map(task => (
+                    <TaskCard
+                      key={task.id}
+                      task={task}
+                      subject={subjectFor(task)}
+                      expandable
+                      hideAreaBadge
+                      onToggleStatus={() => handleToggle(task)}
+                      onEdit={() => { setEditingTask(task); setModalOpen(true) }}
+                      onDelete={() => handleDelete(task.id)}
+                      onUpdateTask={async (updates) => {
+                        const updated = await updateTask(task.id, updates)
+                        setTasks(prev => prev.map(t => t.id === updated.id ? updated : t))
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+
             {/* ── Entregas: TPs / Parciales / Proyectos ── */}
             {entregasTasks.length > 0 && (
-              <div className="rounded-xl border border-orange-100 bg-orange-50/50 p-4 space-y-3">
+              <div
+                className="rounded-xl border p-4 space-y-3"
+                style={entregasColor
+                  ? { backgroundColor: entregasColor + '12', borderColor: entregasColor + '45' }
+                  : { backgroundColor: '#fafafa', borderColor: '#e5e7eb' }
+                }
+              >
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-orange-700 uppercase tracking-wider">Entregas</span>
-                  <span className="text-xs text-orange-400">({entregasTasks.length})</span>
+                  <span
+                    className="text-xs font-bold uppercase tracking-wider"
+                    style={{ color: entregasColor ?? '#92400e' }}
+                  >
+                    Entregas
+                  </span>
+                  <span className="text-xs text-gray-400">({entregasTasks.length})</span>
                 </div>
                 {Object.entries(entregasGrouped).map(([cat, catTasks]) => {
                   const catColor = cat === 'TP' ? 'bg-orange-500' : cat === 'Parcial' ? 'bg-red-500' : 'bg-violet-500'
@@ -512,34 +559,6 @@ export default function ListView({ initialTab = 'university' }: ListViewProps) {
                 })}
               </div>
             )}
-
-            {/* ── Regular tasks ── */}
-            {Object.entries(grouped).map(([category, categoryTasks]) => (
-              <div key={category}>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{category}</span>
-                  <span className="text-xs text-gray-300">({categoryTasks.length})</span>
-                </div>
-                <div className="space-y-2">
-                  {categoryTasks.map(task => (
-                    <TaskCard
-                      key={task.id}
-                      task={task}
-                      subject={subjectFor(task)}
-                      expandable
-                      hideAreaBadge
-                      onToggleStatus={() => handleToggle(task)}
-                      onEdit={() => { setEditingTask(task); setModalOpen(true) }}
-                      onDelete={() => handleDelete(task.id)}
-                      onUpdateTask={async (updates) => {
-                        const updated = await updateTask(task.id, updates)
-                        setTasks(prev => prev.map(t => t.id === updated.id ? updated : t))
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-            ))}
 
             {/* ── Events section ── */}
             {filteredEvents.length > 0 && (

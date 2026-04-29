@@ -226,6 +226,16 @@ export default function TaskItem({
                   : 'Mensual'}
               </span>
             )}
+            {['TP', 'Parcial', 'Proyecto'].includes(task.category ?? '') && (
+              <span className={clsx(
+                'text-[10px] font-bold px-1.5 py-0.5 rounded-full text-white',
+                task.category === 'TP' ? 'bg-orange-500'
+                  : task.category === 'Parcial' ? 'bg-red-500'
+                  : 'bg-violet-500'
+              )}>
+                {task.category}
+              </span>
+            )}
           </div>
 
           {/* Progress preview (collapsed) */}
