@@ -59,6 +59,19 @@ export default function DayView({ dateStr }: DayViewProps) {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   )
 
+  const orderKey = `plani_order_${resolvedDateStr}`
+
+  const applyStoredOrder = (tasksList: Task[]): Task[] => {
+    try {
+      const saved = localStorage.getItem(orderKey)
+      if (!saved) return tasksList
+      const ids: string[] = JSON.parse(saved)
+      const ordered = ids.map(id => tasksList.find(t => t.id === id)).filter(Boolean) as Task[]
+      const remaining = tasksList.filter(t => !ids.includes(t.id))
+      return [...ordered, ...remaining]
+    } catch { return tasksList }
+  }
+
   const loadData = useCallback(async () => {
     setLoading(true)
     const [data] = await Promise.all([
@@ -66,7 +79,7 @@ export default function DayView({ dateStr }: DayViewProps) {
       fetchBlocks(),
       fetchSubjects(),
     ])
-    setTasks(data)
+    setTasks(applyStoredOrder(data))
     setLoading(false)
   }, [resolvedDateStr]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -159,7 +172,9 @@ export default function DayView({ dateStr }: DayViewProps) {
     if (!over || active.id === over.id) return
     const oldIndex = tasks.findIndex(t => t.id === active.id)
     const newIndex = tasks.findIndex(t => t.id === over.id)
-    setTasks(prev => arrayMove(prev, oldIndex, newIndex))
+    const reordered = arrayMove(tasks, oldIndex, newIndex)
+    setTasks(reordered)
+    localStorage.setItem(orderKey, JSON.stringify(reordered.map(t => t.id)))
   }
 
   const navigateDay = (delta: number) => {
@@ -169,10 +184,15 @@ export default function DayView({ dateStr }: DayViewProps) {
 
   const isTodayDate = isToday(date)
 
-  const blockTypeStyle = (type: string) => {
-    if (type === 'university') return 'bg-blue-50 border-blue-100 text-blue-700'
-    if (type === 'work') return 'bg-amber-50 border-amber-100 text-amber-700'
-    return 'bg-gray-50 border-gray-100 text-gray-600'
+  const blockStyle = (block: FixedBlock): { cls: string; style?: React.CSSProperties } => {
+    if (block.subject_id) {
+      const sub = subjects.find(s => s.id === block.subject_id)
+      if (sub) return { cls: 'bg-white border-gray-100 text-gray-800 border-l-[3px]', style: { borderLeftColor: sub.color } }
+    }
+    if (block.type === 'university') return { cls: 'bg-blue-50 border-blue-100 text-blue-700' }
+    if (block.type === 'work') return { cls: 'bg-amber-50 border-amber-100 text-amber-700' }
+    if (block.type === 'personal') return { cls: 'bg-purple-50 border-purple-100 text-purple-700' }
+    return { cls: 'bg-gray-50 border-gray-100 text-gray-600' }
   }
 
   return (
@@ -248,20 +268,24 @@ export default function DayView({ dateStr }: DayViewProps) {
             <div className="mb-6">
               <p className="section-title">Bloques fijos</p>
               <div className="space-y-2">
-                {dayBlocks.map(block => (
-                  <div
-                    key={block.id}
-                    className={clsx(
-                      'flex items-center justify-between px-4 py-3 rounded-xl border text-sm font-medium',
-                      blockTypeStyle(block.type)
-                    )}
-                  >
-                    <span className="font-semibold">{block.title}</span>
-                    <span className="text-xs opacity-60 font-normal tabular-nums">
-                      {block.start_time.substring(0, 5)} – {block.end_time.substring(0, 5)}
-                    </span>
-                  </div>
-                ))}
+                {dayBlocks.map(block => {
+                  const bs = blockStyle(block)
+                  return (
+                    <div
+                      key={block.id}
+                      className={clsx(
+                        'flex items-center justify-between px-4 py-3 rounded-xl border text-sm font-medium',
+                        bs.cls
+                      )}
+                      style={bs.style}
+                    >
+                      <span className="font-semibold">{block.title}</span>
+                      <span className="text-xs opacity-60 font-normal tabular-nums">
+                        {block.start_time.substring(0, 5)} – {block.end_time.substring(0, 5)}
+                      </span>
+                    </div>
+                  )
+                })}
               </div>
             </div>
           )}

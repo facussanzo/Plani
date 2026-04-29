@@ -26,6 +26,7 @@ interface TaskModalProps {
   initialTitle?: string
   initialIsEvent?: boolean
   defaultType?: 'university' | 'work' | 'personal'
+  defaultSubjectId?: string | null
 }
 
 const defaultFormData: TaskFormData = {
@@ -70,7 +71,7 @@ const RECURRING_PATTERNS = [
 // ──────────────────────────────────────────
 // Inline subject creation form
 // ──────────────────────────────────────────
-function NewSubjectForm({ onCreated }: { onCreated: (id: string) => void }) {
+function NewSubjectForm({ onCreated, area = 'university' }: { onCreated: (id: string) => void; area?: 'university' | 'work' | 'personal' }) {
   const { createSubject } = useSubjects()
   const [name, setName] = useState('')
   const [color, setColor] = useState(SUBJECT_COLORS[1].value)
@@ -79,7 +80,7 @@ function NewSubjectForm({ onCreated }: { onCreated: (id: string) => void }) {
   const handleCreate = async () => {
     if (!name.trim()) return
     setSaving(true)
-    const subject = await createSubject(name.trim(), color)
+    const subject = await createSubject(name.trim(), color, area)
     setSaving(false)
     if (subject) {
       setName('')
@@ -387,6 +388,7 @@ export default function TaskModal({
   initialTitle,
   initialIsEvent = false,
   defaultType = 'university',
+  defaultSubjectId = null,
 }: TaskModalProps) {
   const [form, setForm] = useState<TaskFormData>(defaultFormData)
   const [saving, setSaving] = useState(false)
@@ -438,6 +440,7 @@ export default function TaskModal({
         setForm({
           ...defaultFormData,
           type: defaultType,
+          subject_id: defaultSubjectId ?? null,
           start_date: initialDate ?? '',
           title: initialTitle ?? '',
           is_event: initialIsEvent,
@@ -456,7 +459,7 @@ export default function TaskModal({
       setMultiSpecificDates([])
       setMiniCalMonth(new Date())
     }
-  }, [isOpen, initialTask, initialDate, initialTitle, defaultType, initialIsEvent])
+  }, [isOpen, initialTask, initialDate, initialTitle, defaultType, initialIsEvent, defaultSubjectId])
 
   const update = <K extends keyof TaskFormData>(field: K, value: TaskFormData[K]) =>
     setForm(prev => ({ ...prev, [field]: value }))
@@ -526,6 +529,18 @@ export default function TaskModal({
   }
 
   const selectedSubject = subjects.find(s => s.id === form.subject_id)
+
+  const subjectArea = form.type === 'university' || form.type === 'work' || form.type === 'personal' ? form.type : 'university'
+  const filteredSubjects = subjects.filter(s => (s.area ?? 'university') === subjectArea)
+  const subjectLabel = form.type === 'university' ? 'Materia' : 'Tópico'
+  const subjectPlaceholder = form.type === 'university' ? 'Sin materia' : 'Sin tópico'
+  const subjectEmptyLabel = form.type === 'university' ? 'Crear primera materia' : 'Crear primer tópico'
+  const subjectNewLabel = form.type === 'university' ? 'Nueva materia' : 'Nuevo tópico'
+  const subjectBorderColor = form.type === 'university'
+    ? 'border-blue-300 text-blue-500 hover:bg-blue-50'
+    : form.type === 'work'
+      ? 'border-amber-300 text-amber-500 hover:bg-amber-50'
+      : 'border-purple-300 text-purple-500 hover:bg-purple-50'
 
   const progressPct = form.progress_total > 0
     ? Math.round((form.progress_current / form.progress_total) * 100)
@@ -612,18 +627,18 @@ export default function TaskModal({
           </div>
         </div>
 
-        {/* ── Subject selector (university only) ── */}
-        {form.type === 'university' && (
+        {/* ── Subject / Topic selector ── */}
+        {(form.type === 'university' || form.type === 'work' || form.type === 'personal') && (
           <div>
-            <label className="label">Materia</label>
-            {subjects.length === 0 && !showNewSubject ? (
+            <label className="label">{subjectLabel}</label>
+            {filteredSubjects.length === 0 && !showNewSubject ? (
               <button
                 type="button"
                 onClick={() => setShowNewSubject(true)}
-                className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl border border-dashed border-blue-300 text-sm text-blue-500 hover:bg-blue-50 transition-colors"
+                className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-xl border border-dashed text-sm transition-colors ${subjectBorderColor}`}
               >
                 <Plus size={14} />
-                Crear primera materia
+                {subjectEmptyLabel}
               </button>
             ) : (
               <div className="space-y-1.5">
@@ -633,8 +648,8 @@ export default function TaskModal({
                     value={form.subject_id ?? ''}
                     onChange={e => update('subject_id', e.target.value || null)}
                   >
-                    <option value="">Sin materia</option>
-                    {subjects.map(s => (
+                    <option value="">{subjectPlaceholder}</option>
+                    {filteredSubjects.map(s => (
                       <option key={s.id} value={s.id}>{s.name}</option>
                     ))}
                   </select>
@@ -651,12 +666,13 @@ export default function TaskModal({
                   className="text-xs text-blue-500 hover:text-blue-700 font-medium flex items-center gap-1"
                 >
                   <Plus size={11} />
-                  Nueva materia
+                  {subjectNewLabel}
                 </button>
               </div>
             )}
             {showNewSubject && (
               <NewSubjectForm
+                area={subjectArea}
                 onCreated={(id) => {
                   update('subject_id', id)
                   setShowNewSubject(false)
@@ -664,6 +680,34 @@ export default function TaskModal({
                 }}
               />
             )}
+          </div>
+        )}
+
+        {/* ── Tipo de entrega (university only) ── */}
+        {form.type === 'university' && (
+          <div>
+            <label className="label">Tipo de entrega</label>
+            <div className="flex gap-2">
+              {[
+                { value: '', label: 'Tarea', cls: 'border-gray-900 bg-gray-900 text-white' },
+                { value: 'TP', label: 'TP', cls: 'border-orange-500 bg-orange-500 text-white' },
+                { value: 'Parcial', label: 'Parcial', cls: 'border-red-500 bg-red-500 text-white' },
+              ].map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => update('category', opt.value)}
+                  className={clsx(
+                    'px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all',
+                    form.category === opt.value
+                      ? opt.cls
+                      : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
         )}
 

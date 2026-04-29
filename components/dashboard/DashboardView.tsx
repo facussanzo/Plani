@@ -119,10 +119,15 @@ export default function DashboardView() {
     }))
     .filter(s => s.total > 0)
 
-  const blockTypeStyle = (type: string) => {
-    if (type === 'university') return 'bg-blue-50 border-blue-100 text-blue-700'
-    if (type === 'work') return 'bg-amber-50 border-amber-100 text-amber-700'
-    return 'bg-gray-50 border-gray-100 text-gray-600'
+  const blockStyle = (block: FixedBlock): { cls: string; style?: React.CSSProperties } => {
+    if (block.subject_id) {
+      const sub = subjects.find(s => s.id === block.subject_id)
+      if (sub) return { cls: 'bg-white border-gray-100 text-gray-800 border-l-[3px]', style: { borderLeftColor: sub.color } }
+    }
+    if (block.type === 'university') return { cls: 'bg-blue-50 border-blue-100 text-blue-700' }
+    if (block.type === 'work') return { cls: 'bg-amber-50 border-amber-100 text-amber-700' }
+    if (block.type === 'personal') return { cls: 'bg-purple-50 border-purple-100 text-purple-700' }
+    return { cls: 'bg-gray-50 border-gray-100 text-gray-600' }
   }
 
   return (
@@ -342,20 +347,24 @@ export default function DashboardView() {
                 Bloques fijos
               </h3>
               <div className="space-y-2">
-                {todayBlocks.map(block => (
-                  <div
-                    key={block.id}
-                    className={clsx(
-                      'flex items-center justify-between px-3 py-2.5 rounded-xl border text-sm font-medium',
-                      blockTypeStyle(block.type)
-                    )}
-                  >
-                    <span>{block.title}</span>
-                    <span className="text-xs opacity-60 font-normal tabular-nums">
-                      {block.start_time.substring(0, 5)} – {block.end_time.substring(0, 5)}
-                    </span>
-                  </div>
-                ))}
+                {todayBlocks.map(block => {
+                  const bs = blockStyle(block)
+                  return (
+                    <div
+                      key={block.id}
+                      className={clsx(
+                        'flex items-center justify-between px-3 py-2.5 rounded-xl border text-sm font-medium',
+                        bs.cls
+                      )}
+                      style={bs.style}
+                    >
+                      <span>{block.title}</span>
+                      <span className="text-xs opacity-60 font-normal tabular-nums">
+                        {block.start_time.substring(0, 5)} – {block.end_time.substring(0, 5)}
+                      </span>
+                    </div>
+                  )
+                })}
               </div>
             </div>
           )}

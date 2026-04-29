@@ -122,12 +122,13 @@ export default function TaskCard({
     <div
       className={clsx(
         'task-card relative border-l-4 select-none',
-        leftBorderColors[task.type],
+        !subject && leftBorderColors[task.type],
         isDone && 'opacity-60',
         isCancelled && 'opacity-40',
         compact ? 'p-2' : 'p-3',
         expandable && expanded && 'shadow-card'
       )}
+      style={subject ? { borderLeftColor: subject.color } : undefined}
     >
       {/* Main row */}
       <div

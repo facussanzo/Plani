@@ -26,12 +26,12 @@ export function useSubjects() {
     }
   }, [])
 
-  const createSubject = useCallback(async (name: string, color: string): Promise<Subject | null> => {
+  const createSubject = useCallback(async (name: string, color: string, area: 'university' | 'work' | 'personal' = 'university'): Promise<Subject | null> => {
     try {
       const userId = await getAuthUserId()
       const { data, error } = await db
         .from('subjects')
-        .insert([{ name: name.trim(), color, user_id: userId }])
+        .insert([{ name: name.trim(), color, user_id: userId, area }])
         .select()
         .single()
 

@@ -29,9 +29,11 @@ const SORT_LABELS: Record<SortKey, string> = {
 // ------- Subject Management Panel -------
 function SubjectManager({
   subjects,
+  area = 'university',
   onRefresh,
 }: {
   subjects: Subject[]
+  area?: 'university' | 'work' | 'personal'
   onRefresh: () => void
 }) {
   const { createSubject, deleteSubject } = useSubjects()
@@ -43,7 +45,7 @@ function SubjectManager({
     e.preventDefault()
     if (!name.trim()) return
     setSaving(true)
-    await createSubject(name.trim(), color)
+    await createSubject(name.trim(), color, area)
     setName('')
     setSaving(false)
     onRefresh()
@@ -152,8 +154,8 @@ export default function ListView({ initialTab = 'university' }: ListViewProps) {
   const filtered = useMemo(() => {
     let result = [...tasks]
 
-    // Subject filter (university only)
-    if (area === 'university' && activeSubjectId !== null) {
+    // Subject/topic filter
+    if (activeSubjectId !== null) {
       result = result.filter(t => t.subject_id === activeSubjectId)
     }
 
@@ -184,15 +186,19 @@ export default function ListView({ initialTab = 'university' }: ListViewProps) {
     return result
   }, [tasks, area, activeSubjectId, filterStatus, search, sortBy])
 
+  // Separate events from tasks
+  const filteredEvents = useMemo(() => filtered.filter(t => t.is_event), [filtered])
+  const filteredTasks = useMemo(() => filtered.filter(t => !t.is_event), [filtered])
+
   const grouped = useMemo(() => {
     const groups: Record<string, Task[]> = {}
-    for (const task of filtered) {
+    for (const task of filteredTasks) {
       const key = task.category || 'General'
       if (!groups[key]) groups[key] = []
       groups[key].push(task)
     }
     return groups
-  }, [filtered])
+  }, [filteredTasks])
 
   const handleSave = async (data: TaskFormData) => {
     if (editingTask) {
@@ -225,18 +231,25 @@ export default function ListView({ initialTab = 'university' }: ListViewProps) {
     done: tasks.filter(t => t.status === 'done').length,
   }
 
-  // Subjects with task counts
-  const subjectsWithCount = useMemo(() =>
-    subjects.map(s => ({
-      ...s,
-      count: tasks.filter(t => t.subject_id === s.id).length,
-    })),
-    [subjects, tasks]
+  // Subjects filtered by current area
+  const subjectsForArea = useMemo(() =>
+    subjects.filter(s => (s.area ?? 'university') === area),
+    [subjects, area]
   )
 
-  const allTasksCount = tasks.length
+  // Subjects with PENDING task counts only
+  const subjectsWithCount = useMemo(() =>
+    subjectsForArea.map(s => ({
+      ...s,
+      count: tasks.filter(t => t.subject_id === s.id && t.status !== 'done' && t.status !== 'cancelled').length,
+    })),
+    [subjectsForArea, tasks]
+  )
+
+  const allTasksCount = tasks.filter(t => t.status !== 'done' && t.status !== 'cancelled').length
 
   const isUniversity = area === 'university'
+  const hasTopics = area === 'work' || area === 'personal'
 
   return (
     <div className="p-8 flex gap-6 max-w-6xl">
@@ -285,8 +298,8 @@ export default function ListView({ initialTab = 'university' }: ListViewProps) {
           </Button>
         </div>
 
-        {/* Subject sub-tabs (university only) */}
-        {isUniversity && (
+        {/* Subject/Topic sub-tabs */}
+        {(isUniversity || hasTopics) && (
           <div className="mb-5">
             <div className="flex items-center gap-1.5 flex-wrap">
               {/* "Todas" tab */}
@@ -308,7 +321,7 @@ export default function ListView({ initialTab = 'university' }: ListViewProps) {
                 </span>
               </button>
 
-              {/* Subject tabs */}
+              {/* Subject/Topic tabs */}
               {subjectsWithCount.map(s => (
                 <button
                   key={s.id}
@@ -335,22 +348,29 @@ export default function ListView({ initialTab = 'university' }: ListViewProps) {
                 </button>
               ))}
 
-              {/* Manage subjects button */}
+              {/* Manage subjects/topics button */}
               <button
                 onClick={() => setShowSubjectManager(!showSubjectManager)}
-                className="px-2.5 py-1.5 rounded-full text-xs font-medium border border-dashed border-gray-300 text-gray-400 hover:border-blue-300 hover:text-blue-500 transition-all"
+                className={clsx(
+                  'px-2.5 py-1.5 rounded-full text-xs font-medium border border-dashed text-gray-400 transition-all',
+                  isUniversity
+                    ? 'border-gray-300 hover:border-blue-300 hover:text-blue-500'
+                    : area === 'work'
+                      ? 'border-gray-300 hover:border-amber-300 hover:text-amber-600'
+                      : 'border-gray-300 hover:border-purple-300 hover:text-purple-500'
+                )}
               >
-                {showSubjectManager ? '✕ Cerrar' : '+ Materias'}
+                {showSubjectManager ? '✕ Cerrar' : isUniversity ? '+ Materias' : '+ Tópicos'}
               </button>
             </div>
 
-            {/* Subject manager panel */}
+            {/* Subject/Topic manager panel */}
             {showSubjectManager && (
               <div className="mt-3 p-4 bg-gray-50 border border-gray-200 rounded-xl">
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-                  Gestionar materias
+                  {isUniversity ? 'Gestionar materias' : 'Gestionar tópicos'}
                 </p>
-                <SubjectManager subjects={subjects} onRefresh={fetchSubjects} />
+                <SubjectManager subjects={subjectsForArea} area={area} onRefresh={fetchSubjects} />
               </div>
             )}
           </div>
@@ -422,16 +442,70 @@ export default function ListView({ initialTab = 'university' }: ListViewProps) {
           </div>
         ) : (
           <div className="space-y-6">
-            {Object.entries(grouped).map(([category, categoryTasks]) => (
-              <div key={category}>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    {category}
-                  </span>
-                  <span className="text-xs text-gray-300">({categoryTasks.length})</span>
+            {Object.entries(grouped).map(([category, categoryTasks]) => {
+              const isTP = category === 'TP'
+              const isParcial = category === 'Parcial'
+              const isSpecial = isTP || isParcial
+              return (
+                <div key={category}>
+                  <div className={clsx(
+                    'flex items-center gap-2 mb-2',
+                    isSpecial && 'px-3 py-1.5 rounded-lg -mx-3',
+                    isTP && 'bg-orange-50',
+                    isParcial && 'bg-red-50',
+                  )}>
+                    {isSpecial && (
+                      <span className={clsx(
+                        'text-[10px] font-bold px-2 py-0.5 rounded-full text-white',
+                        isTP ? 'bg-orange-500' : 'bg-red-500'
+                      )}>
+                        {category}
+                      </span>
+                    )}
+                    <span className={clsx(
+                      'text-xs font-semibold uppercase tracking-wider',
+                      isTP ? 'text-orange-600' : isParcial ? 'text-red-600' : 'text-gray-400'
+                    )}>
+                      {isSpecial ? '' : category}
+                    </span>
+                    <span className={clsx(
+                      'text-xs',
+                      isTP ? 'text-orange-400' : isParcial ? 'text-red-400' : 'text-gray-300'
+                    )}>
+                      ({categoryTasks.length})
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    {categoryTasks.map(task => (
+                      <TaskCard
+                        key={task.id}
+                        task={task}
+                        subject={subjectFor(task)}
+                        expandable
+                        hideAreaBadge
+                        onToggleStatus={() => handleToggle(task)}
+                        onEdit={() => { setEditingTask(task); setModalOpen(true) }}
+                        onDelete={() => handleDelete(task.id)}
+                        onUpdateTask={async (updates) => {
+                          const updated = await updateTask(task.id, updates)
+                          setTasks(prev => prev.map(t => t.id === updated.id ? updated : t))
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )
+            })}
+
+            {/* Events section */}
+            {filteredEvents.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-2 mt-4 pt-4 border-t border-gray-100">
+                  <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Eventos</span>
+                  <span className="text-xs text-gray-300">({filteredEvents.length})</span>
                 </div>
                 <div className="space-y-2">
-                  {categoryTasks.map(task => (
+                  {filteredEvents.map(task => (
                     <TaskCard
                       key={task.id}
                       task={task}
@@ -449,7 +523,7 @@ export default function ListView({ initialTab = 'university' }: ListViewProps) {
                   ))}
                 </div>
               </div>
-            ))}
+            )}
           </div>
         )}
       </div>
@@ -459,6 +533,7 @@ export default function ListView({ initialTab = 'university' }: ListViewProps) {
         onClose={() => { setModalOpen(false); setEditingTask(null) }}
         initialTask={editingTask}
         defaultType={area === 'university' ? 'university' : area === 'work' ? 'work' : 'personal'}
+        defaultSubjectId={editingTask ? null : activeSubjectId}
         onSave={handleSave}
       />
     </div>

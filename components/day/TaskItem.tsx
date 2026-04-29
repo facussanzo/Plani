@@ -133,10 +133,10 @@ export default function TaskItem({
   return (
     <div
       ref={setNodeRef}
-      style={style}
+      style={{ ...style, ...(subject ? { borderLeftColor: subject.color } : {}) }}
       className={clsx(
         'group bg-white border border-gray-100 rounded-xl shadow-soft border-l-4 transition-all duration-200',
-        leftBorderColors[task.type],
+        !subject && leftBorderColors[task.type],
         isDragging && 'opacity-50 scale-95 shadow-lg',
         isDone && 'opacity-60',
         isCancelled && 'opacity-40',

@@ -5,6 +5,7 @@ export interface Subject {
   id: string
   name: string
   color: string
+  area?: 'university' | 'work' | 'personal'
   created_at: string
 }
 
