@@ -32,6 +32,7 @@ function sanitize(data: TaskFormData): Record<string, unknown> {
     is_event: data.is_event ?? false,
     tag_ids: data.tag_ids ?? [],
     group_id: data.group_id ?? null,
+    priority: data.priority ?? null,
   }
 }
 

@@ -12,7 +12,7 @@ import {
 } from 'lucide-react'
 import clsx from 'clsx'
 import type { Task, Subject, TaskFormData } from '@/lib/types'
-import { TASK_TYPE_COLORS, TASK_TYPE_LABELS } from '@/lib/types'
+import { TASK_TYPE_COLORS, TASK_TYPE_LABELS, PRIORITY_CONFIG } from '@/lib/types'
 import ProgressBar from '@/components/ui/ProgressBar'
 import { useAreaTags } from '@/hooks/useAreaTags'
 import { useSubtasks } from '@/hooks/useSubtasks'
@@ -180,8 +180,14 @@ export default function TaskItem({
             )}>
               {task.title}
             </p>
-            {/* Tags inline: area tags (small) → subject → type */}
+            {/* Tags inline: priority dot → area tags → subject → type */}
             <div className="flex items-center gap-1 flex-shrink-0 flex-wrap justify-end">
+              {task.priority && (
+                <span
+                  className={clsx('w-2 h-2 rounded-full flex-shrink-0', PRIORITY_CONFIG[task.priority].dot)}
+                  title={`Prioridad ${PRIORITY_CONFIG[task.priority].label}`}
+                />
+              )}
               {taskTags.slice(0, 2).map(tag => tag && (
                 <span
                   key={tag.id}

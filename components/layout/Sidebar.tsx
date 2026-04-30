@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Calendar,
   Sun,
+  CalendarDays,
   GraduationCap,
   Briefcase,
   User,
@@ -15,6 +16,7 @@ import {
   Bookmark,
   Zap,
   LogOut,
+  Settings,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useAuth } from '@/hooks/useAuth'
@@ -31,6 +33,7 @@ const sections: { title?: string; items: NavItem[] }[] = [
     items: [
       { href: '/',         label: 'Dashboard',  icon: LayoutDashboard, exact: true },
       { href: '/calendar', label: 'Calendario', icon: Calendar },
+      { href: '/week',     label: 'Semana',     icon: CalendarDays },
       { href: '/day/today', label: 'Hoy',       icon: Sun },
     ],
   },
@@ -51,7 +54,8 @@ const sections: { title?: string; items: NavItem[] }[] = [
   },
   {
     items: [
-      { href: '/blocks', label: 'Bloques', icon: Clock },
+      { href: '/blocks',   label: 'Bloques',       icon: Clock },
+      { href: '/settings', label: 'Configuración', icon: Settings },
     ],
   },
 ]

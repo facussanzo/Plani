@@ -7,7 +7,7 @@ import {
   addMonths, subMonths, parseISO, isSameDay,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { ChevronLeft, ChevronRight, Plus, CalendarDays, SunMedium } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, CalendarDays, SunMedium, Layers } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import {
   DndContext, DragEndEvent, DragOverlay, DragStartEvent,
@@ -34,6 +34,7 @@ const AREA_FILTERS: { value: AreaFilter; label: string }[] = [
 ]
 
 const FREE_DAYS_KEY = 'plani_free_days'
+const SHOW_BLOCKS_KEY = 'plani_cal_show_blocks'
 
 function loadFreeDays(): Set<string> {
   if (typeof window === 'undefined') return new Set()
@@ -60,6 +61,11 @@ export default function CalendarView() {
   const [areaFilter, setAreaFilter] = useState<AreaFilter>('general')
   const [freeDays, setFreeDays] = useState<Set<string>>(new Set())
   const [freeMode, setFreeMode] = useState(false)
+  const [showBlocks, setShowBlocks] = useState(() => {
+    if (typeof window === 'undefined') return true
+    const stored = localStorage.getItem(SHOW_BLOCKS_KEY)
+    return stored === null ? true : stored === 'true'
+  })
 
   const { fetchTasksByDateRange, updateTask, createTask } = useTasks()
   const { blocks, fetchBlocks } = useFixedBlocks()
@@ -217,6 +223,25 @@ export default function CalendarView() {
             ))}
           </div>
 
+          {/* Toggle fixed blocks */}
+          <button
+            onClick={() => {
+              const next = !showBlocks
+              setShowBlocks(next)
+              localStorage.setItem(SHOW_BLOCKS_KEY, String(next))
+            }}
+            className={clsx(
+              'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors border',
+              showBlocks
+                ? 'bg-blue-50 text-blue-700 border-blue-200'
+                : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
+            )}
+            title="Mostrar/ocultar bloques fijos"
+          >
+            <Layers size={13} />
+            Bloques
+          </button>
+
           {/* Free day mode toggle */}
           <button
             onClick={() => setFreeMode(prev => !prev)}
@@ -288,7 +313,7 @@ export default function CalendarView() {
                   date={day}
                   dateStr={dayStr}
                   tasks={dayTasks}
-                  blocks={dayBlocks}
+                  blocks={showBlocks ? dayBlocks : []}
                   subjects={subjects}
                   isCurrentMonth={inMonth}
                   isToday={isToday(day)}

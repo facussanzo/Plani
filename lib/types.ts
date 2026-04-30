@@ -1,5 +1,6 @@
 export type TaskType = 'university' | 'work' | 'personal' | 'recurring'
 export type TaskStatus = 'pending' | 'in_progress' | 'done' | 'cancelled'
+export type TaskPriority = 'high' | 'medium' | 'low'
 
 export interface Subject {
   id: string
@@ -29,6 +30,7 @@ export interface Task {
   is_event?: boolean
   tag_ids?: string[]
   group_id?: string | null
+  priority?: TaskPriority | null
   created_at: string
 }
 
@@ -147,6 +149,12 @@ export const TASK_TYPE_COLORS: Record<TaskType, { bg: string; text: string; bord
     border: 'border-emerald-200',
     dot: 'bg-emerald-500',
   },
+}
+
+export const PRIORITY_CONFIG: Record<TaskPriority, { label: string; dot: string; bg: string; text: string; border: string }> = {
+  high:   { label: 'Alta',  dot: 'bg-red-500',    bg: 'bg-red-50',    text: 'text-red-600',    border: 'border-red-300' },
+  medium: { label: 'Media', dot: 'bg-orange-400',  bg: 'bg-orange-50', text: 'text-orange-600', border: 'border-orange-300' },
+  low:    { label: 'Baja',  dot: 'bg-green-500',   bg: 'bg-green-50',  text: 'text-green-600',  border: 'border-green-300' },
 }
 
 export const TASK_STATUS_COLORS: Record<TaskStatus, { bg: string; text: string }> = {

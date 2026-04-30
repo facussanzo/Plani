@@ -95,11 +95,23 @@ export default function DayView({ dateStr }: DayViewProps) {
   const subjectFor = (task: Task) =>
     task.subject_id ? subjects.find(s => s.id === task.subject_id) ?? null : null
 
-  const allDayTasks = tasks.filter(t => t.is_all_day)
+  const SPECIAL_CATS = new Set(['TP', 'Parcial', 'Proyecto'])
+  const entregasTasks = tasks.filter(t => SPECIAL_CATS.has(t.category ?? ''))
+  const entregasGrouped: Record<string, Task[]> = {}
+  for (const task of entregasTasks) {
+    const key = task.category || 'TP'
+    if (!entregasGrouped[key]) entregasGrouped[key] = []
+    entregasGrouped[key].push(task)
+  }
+  const allEntregasColors = entregasTasks.map(t => subjects.find(s => s.id === t.subject_id)?.color).filter((c): c is string => !!c)
+  const uniqueEntregasColors = allEntregasColors.filter((c, i) => allEntregasColors.indexOf(c) === i)
+  const entregasColor = uniqueEntregasColors.length === 1 ? uniqueEntregasColors[0] : null
+
+  const allDayTasks = tasks.filter(t => t.is_all_day && !SPECIAL_CATS.has(t.category ?? ''))
   const timedTasks = tasks
-    .filter(t => !t.is_all_day && t.time)
+    .filter(t => !t.is_all_day && t.time && !SPECIAL_CATS.has(t.category ?? ''))
     .sort((a, b) => (a.time ?? '').localeCompare(b.time ?? ''))
-  const untimedTasks = tasks.filter(t => !t.is_all_day && !t.time)
+  const untimedTasks = tasks.filter(t => !t.is_all_day && !t.time && !SPECIAL_CATS.has(t.category ?? ''))
 
   const handleToggle = async (task: Task) => {
     const updated = await toggleTaskStatus(task)
@@ -283,6 +295,56 @@ export default function DayView({ dateStr }: DayViewProps) {
                       <span className="text-xs opacity-60 font-normal tabular-nums">
                         {block.start_time.substring(0, 5)} – {block.end_time.substring(0, 5)}
                       </span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Entregas: TPs / Parciales / Proyectos */}
+          {entregasTasks.length > 0 && (
+            <div className="mb-6">
+              <div
+                className="rounded-xl border p-4 space-y-3"
+                style={entregasColor
+                  ? { backgroundColor: entregasColor + '12', borderColor: entregasColor + '45' }
+                  : { backgroundColor: '#fff7ed', borderColor: '#fed7aa' }
+                }
+              >
+                <div className="flex items-center gap-2">
+                  <span
+                    className="text-xs font-bold uppercase tracking-wider"
+                    style={{ color: entregasColor ?? '#c2410c' }}
+                  >
+                    Entregas
+                  </span>
+                  <span className="text-xs text-gray-400">({entregasTasks.length})</span>
+                </div>
+                {Object.entries(entregasGrouped).map(([cat, catTasks]) => {
+                  const catColor = cat === 'TP' ? 'bg-orange-500' : cat === 'Parcial' ? 'bg-red-500' : 'bg-violet-500'
+                  return (
+                    <div key={cat}>
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full text-white ${catColor}`}>{cat}</span>
+                        <span className="text-xs text-gray-400">({catTasks.length})</span>
+                      </div>
+                      <SortableContext items={catTasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
+                        <div className="space-y-1.5">
+                          {catTasks.map(task => (
+                            <TaskItem
+                              key={task.id}
+                              task={task}
+                              subject={subjectFor(task)}
+                              onEdit={() => handleEdit(task)}
+                              onDelete={() => handleDelete(task.id)}
+                              onToggleStatus={() => handleToggle(task)}
+                              onReschedule={(date, time) => handleReschedule(task, date, time)}
+                              onUpdateTask={(updates) => handleUpdateTask(task, updates)}
+                            />
+                          ))}
+                        </div>
+                      </SortableContext>
                     </div>
                   )
                 })}

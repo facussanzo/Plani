@@ -13,8 +13,8 @@ import Button from '@/components/ui/Button'
 import { useSubjects } from '@/hooks/useSubjects'
 import { useAreaTags } from '@/hooks/useAreaTags'
 import { useSubtasks } from '@/hooks/useSubtasks'
-import type { Task, TaskStatus, TaskFormData } from '@/lib/types'
-import { SUBJECT_COLORS, TAG_PASTEL_COLORS } from '@/lib/types'
+import type { Task, TaskStatus, TaskFormData, TaskPriority } from '@/lib/types'
+import { SUBJECT_COLORS, TAG_PASTEL_COLORS, PRIORITY_CONFIG } from '@/lib/types'
 import clsx from 'clsx'
 
 interface TaskModalProps {
@@ -47,6 +47,7 @@ const defaultFormData: TaskFormData = {
   status: 'pending',
   is_event: false,
   tag_ids: [],
+  priority: null,
 }
 
 const UI_TYPES = [
@@ -395,6 +396,7 @@ export default function TaskModal({
   const [error, setError] = useState<string | null>(null)
   const [showNewSubject, setShowNewSubject] = useState(false)
   const [hasProgress, setHasProgress] = useState(false)
+  const [simpleMode, setSimpleMode] = useState(true)
 
   const { createSubtask: createPendingSubtask } = useSubtasks()
   const [pendingSubtasks, setPendingSubtasks] = useState<{title: string; date: string}[]>([])
@@ -435,6 +437,7 @@ export default function TaskModal({
           status: initialTask.status,
           is_event: initialTask.is_event ?? false,
           tag_ids: initialTask.tag_ids ?? [],
+          priority: initialTask.priority ?? null,
         })
       } else {
         setForm({
@@ -562,8 +565,27 @@ export default function TaskModal({
     >
       <form onSubmit={handleSubmit} className="space-y-4">
 
-        {/* ── Event toggle — hidden for entregas ── */}
-        {!initialTask && !isEntrega && (
+        {/* ── Simple / Detallado toggle ── */}
+        <div className="flex items-center justify-end gap-2">
+          <span className={clsx('text-xs font-medium', simpleMode ? 'text-gray-900' : 'text-gray-400')}>Simple</span>
+          <button
+            type="button"
+            onClick={() => setSimpleMode(prev => !prev)}
+            className={clsx(
+              'relative inline-flex h-5 w-9 items-center rounded-full transition-colors flex-shrink-0',
+              simpleMode ? 'bg-gray-300' : 'bg-gray-900'
+            )}
+          >
+            <span className={clsx(
+              'inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform',
+              simpleMode ? 'translate-x-0.5' : 'translate-x-4'
+            )} />
+          </button>
+          <span className={clsx('text-xs font-medium', !simpleMode ? 'text-gray-900' : 'text-gray-400')}>Detallado</span>
+        </div>
+
+        {/* ── Event toggle — only in detailed mode ── */}
+        {!simpleMode && !initialTask && !isEntrega && (
           <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-xl">
             <button
               type="button"
@@ -722,8 +744,35 @@ export default function TaskModal({
           </div>
         )}
 
-        {/* ── Area tags ── */}
-        {form.type !== 'recurring' && (
+        {/* ── Prioridad ── */}
+        <div>
+          <label className="label">Prioridad</label>
+          <div className="flex gap-2">
+            {(['high', 'medium', 'low'] as TaskPriority[]).map(p => {
+              const cfg = PRIORITY_CONFIG[p]
+              const isActive = form.priority === p
+              return (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => update('priority', isActive ? null : p)}
+                  className={clsx(
+                    'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all',
+                    isActive
+                      ? `${cfg.bg} ${cfg.text} ${cfg.border}`
+                      : 'bg-white text-gray-400 border-gray-200 hover:bg-gray-50 hover:text-gray-600'
+                  )}
+                >
+                  <span className={clsx('w-2 h-2 rounded-full', isActive ? cfg.dot : 'bg-gray-300')} />
+                  {cfg.label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* ── Area tags — detailed only ── */}
+        {!simpleMode && form.type !== 'recurring' && (
           <div>
             <label className="label">Etiquetas</label>
             <TagsSelector
@@ -734,22 +783,34 @@ export default function TaskModal({
           </div>
         )}
 
-        {/* ── Description ── */}
-        <div>
-          <label className="label">Descripción</label>
-          <textarea
-            className="input resize-none"
-            rows={2}
-            placeholder="Detalles opcionales..."
-            value={form.description ?? ''}
-            onChange={e => update('description', e.target.value)}
-          />
-        </div>
+        {/* ── Description — detailed only ── */}
+        {!simpleMode && (
+          <div>
+            <label className="label">Descripción</label>
+            <textarea
+              className="input resize-none"
+              rows={2}
+              placeholder="Detalles opcionales..."
+              value={form.description ?? ''}
+              onChange={e => update('description', e.target.value)}
+            />
+          </div>
+        )}
 
         {/* ── Dates ── */}
         {isEntrega ? (
           <div>
             <label className="label">Fecha de entrega</label>
+            <input
+              className="input"
+              type="date"
+              value={form.deadline ?? ''}
+              onChange={e => { update('deadline', e.target.value); update('start_date', e.target.value) }}
+            />
+          </div>
+        ) : simpleMode ? (
+          <div>
+            <label className="label">Fecha límite</label>
             <input
               className="input"
               type="date"
@@ -779,8 +840,8 @@ export default function TaskModal({
           </div>
         )}
 
-        {/* ── Time + Status ── */}
-        <div className="grid grid-cols-2 gap-3">
+        {/* ── Time + Status — detailed only ── */}
+        {!simpleMode && <div className="grid grid-cols-2 gap-3">
           <div>
             <div className="flex items-center justify-between mb-1">
               <label className="label mb-0">Hora</label>
@@ -811,10 +872,10 @@ export default function TaskModal({
               ))}
             </select>
           </div>
-        </div>
+        </div>}
 
-        {/* ── Multi-fecha (only for new tasks) ── */}
-        {!initialTask && (
+        {/* ── Multi-fecha — detailed only, new tasks ── */}
+        {!simpleMode && !initialTask && (
           <div className="border border-gray-100 rounded-xl p-3 space-y-3">
             <Toggle
               checked={multiEnabled}
@@ -946,13 +1007,13 @@ export default function TaskModal({
           </div>
         )}
 
-        {/* ── Subtasks (editing existing tasks only) ── */}
-        {initialTask && (
+        {/* ── Subtasks — detailed only ── */}
+        {!simpleMode && initialTask && (
           <SubtasksSection taskId={initialTask.id} />
         )}
 
-        {/* ── Pending subtasks (new task only) ── */}
-        {!initialTask && (
+        {/* ── Pending subtasks — detailed only ── */}
+        {!simpleMode && !initialTask && (
           <div className="border border-gray-100 rounded-xl p-3 space-y-2">
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Subtareas {pendingSubtasks.length > 0 && `(${pendingSubtasks.length})`}
@@ -1026,8 +1087,8 @@ export default function TaskModal({
           </div>
         )}
 
-        {/* ── Progress ── */}
-        <div className="border border-gray-100 rounded-xl p-3 space-y-3">
+        {/* ── Progress — detailed only ── */}
+        {!simpleMode && <div className="border border-gray-100 rounded-xl p-3 space-y-3">
           <Toggle
             checked={hasProgress}
             onChange={handleProgressToggle}
@@ -1080,8 +1141,10 @@ export default function TaskModal({
           )}
         </div>
 
-        {/* ── Recurring ── */}
-        <div className="border border-gray-100 rounded-xl p-3 space-y-3">
+        }
+
+        {/* ── Recurring — detailed only ── */}
+        {!simpleMode && <div className="border border-gray-100 rounded-xl p-3 space-y-3">
           <Toggle
             checked={form.is_recurring}
             onChange={(v) => {
@@ -1127,6 +1190,8 @@ export default function TaskModal({
             </div>
           )}
         </div>
+
+        }
 
         {/* ── Error ── */}
         {error && (
