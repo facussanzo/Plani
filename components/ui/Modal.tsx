@@ -87,7 +87,7 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' }:
             </button>
           </div>
         )}
-        <div className="px-5 py-4 pb-safe-bottom">{children}</div>
+        <div className="px-5 pt-4 pb-8">{children}</div>
       </div>
     </div>
   )

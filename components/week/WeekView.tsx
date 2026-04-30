@@ -6,7 +6,7 @@ import {
   addWeeks, subWeeks, isToday, parseISO,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { ChevronLeft, ChevronRight, Layers, Plus } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Layers, Plus, CalendarDays } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useTasks } from '@/hooks/useTasks'
 import { useFixedBlocks } from '@/hooks/useFixedBlocks'
@@ -95,9 +95,10 @@ export default function WeekView() {
   return (
     <div className="flex flex-col h-screen overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-3 border-b border-gray-100 bg-white flex-shrink-0">
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="flex items-center gap-1">
+      <div className="border-b border-gray-100 bg-white flex-shrink-0">
+        {/* Row 1: nav + actions */}
+        <div className="flex items-center justify-between px-6 py-3">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setBaseDate(prev => subWeeks(prev, 1))}
               className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
@@ -114,14 +115,31 @@ export default function WeekView() {
               <ChevronRight size={16} />
             </button>
           </div>
-
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => { setEditingTask(null); setModalDate(format(new Date(), 'yyyy-MM-dd')); setModalOpen(true) }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-medium rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              <CalendarDays size={13} />
+              Nuevo evento
+            </button>
+            <button
+              onClick={() => { setEditingTask(null); setModalDate(format(new Date(), 'yyyy-MM-dd')); setModalOpen(true) }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-lg hover:bg-gray-800 transition-colors"
+            >
+              <Plus size={13} />
+              Nueva tarea
+            </button>
+          </div>
+        </div>
+        {/* Row 2: toggles */}
+        <div className="flex items-center gap-2 px-6 pb-2.5">
           <button
             onClick={() => setBaseDate(new Date())}
             className="px-2.5 py-1 text-xs font-medium text-gray-500 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200"
           >
             Esta semana
           </button>
-
           <button
             onClick={toggleShowBlocks}
             className={clsx(
@@ -135,14 +153,6 @@ export default function WeekView() {
             Bloques
           </button>
         </div>
-
-        <button
-          onClick={() => { setEditingTask(null); setModalDate(format(new Date(), 'yyyy-MM-dd')); setModalOpen(true) }}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-lg hover:bg-gray-800 transition-colors"
-        >
-          <Plus size={13} />
-          Nueva tarea
-        </button>
       </div>
 
       {/* Day headers */}

@@ -29,7 +29,6 @@ import type { Task, FixedBlock, TaskFormData } from '@/lib/types'
 import { TASK_TYPE_COLORS } from '@/lib/types'
 import TaskItem from './TaskItem'
 import TaskModal from '@/components/tasks/TaskModal'
-import Button from '@/components/ui/Button'
 import clsx from 'clsx'
 
 interface DayViewProps {
@@ -241,11 +240,7 @@ export default function DayView({ dateStr }: DayViewProps) {
           </button>
         </div>
 
-        <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-          <Button variant="secondary" size="sm" onClick={() => router.push('/calendar')} className="hidden sm:inline-flex">
-            <CalendarDays size={14} />
-            Calendario
-          </Button>
+        <div className="flex items-center gap-2 flex-shrink-0">
           <button
             onClick={() => openNew(true)}
             className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-medium rounded-lg hover:bg-gray-200 transition-colors"
@@ -255,11 +250,10 @@ export default function DayView({ dateStr }: DayViewProps) {
           </button>
           <button
             onClick={() => openNew(false)}
-            className="inline-flex items-center gap-1.5 px-3 py-2 sm:py-1.5 bg-gray-900 text-white text-xs font-medium rounded-lg hover:bg-gray-800 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-lg hover:bg-gray-800 transition-colors"
           >
-            <Plus size={14} />
-            <span className="hidden sm:inline">Nueva tarea</span>
-            <span className="sm:hidden">Nueva</span>
+            <Plus size={13} />
+            Nueva tarea
           </button>
         </div>
       </div>

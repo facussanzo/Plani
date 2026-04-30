@@ -177,10 +177,10 @@ export default function CalendarView() {
   return (
     <div className="flex flex-col h-screen overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-3 border-b border-gray-100 bg-white flex-shrink-0">
-        <div className="flex items-center gap-3 flex-wrap">
-          {/* Month nav */}
-          <div className="flex items-center gap-1">
+      <div className="border-b border-gray-100 bg-white flex-shrink-0">
+        {/* Row 1: nav + actions */}
+        <div className="flex items-center justify-between px-6 py-3">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setCurrentMonth(prev => subMonths(prev, 1))}
               className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
@@ -196,16 +196,32 @@ export default function CalendarView() {
             >
               <ChevronRight size={16} />
             </button>
+            <button
+              onClick={() => setCurrentMonth(new Date())}
+              className="px-2.5 py-1 text-xs font-medium text-gray-500 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200"
+            >
+              Hoy
+            </button>
           </div>
-
-          <button
-            onClick={() => setCurrentMonth(new Date())}
-            className="px-2.5 py-1 text-xs font-medium text-gray-500 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200"
-          >
-            Hoy
-          </button>
-
-          {/* Area filter */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => openNewTask(new Date(), true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-medium rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              <CalendarDays size={13} />
+              Nuevo evento
+            </button>
+            <button
+              onClick={() => openNewTask(new Date(), false)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-lg hover:bg-gray-800 transition-colors"
+            >
+              <Plus size={13} />
+              Nueva tarea
+            </button>
+          </div>
+        </div>
+        {/* Row 2: filters + toggles */}
+        <div className="flex items-center gap-2 px-6 pb-2.5 flex-wrap">
           <div className="flex items-center gap-0.5 bg-gray-100 rounded-lg p-0.5">
             {AREA_FILTERS.map(({ value, label }) => (
               <button
@@ -222,8 +238,6 @@ export default function CalendarView() {
               </button>
             ))}
           </div>
-
-          {/* Toggle fixed blocks */}
           <button
             onClick={() => {
               const next = !showBlocks
@@ -236,13 +250,10 @@ export default function CalendarView() {
                 ? 'bg-blue-50 text-blue-700 border-blue-200'
                 : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
             )}
-            title="Mostrar/ocultar bloques fijos"
           >
             <Layers size={13} />
             Bloques
           </button>
-
-          {/* Free day mode toggle */}
           <button
             onClick={() => setFreeMode(prev => !prev)}
             className={clsx(
@@ -251,27 +262,9 @@ export default function CalendarView() {
                 ? 'bg-amber-50 text-amber-700 border-amber-200'
                 : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
             )}
-            title="Marcar días libres (fines de semana, feriados)"
           >
             <SunMedium size={13} />
             {freeMode ? 'Salir: Días libres' : 'Días libres'}
-          </button>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => openNewTask(new Date(), true)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-medium rounded-lg hover:bg-gray-200 transition-colors"
-          >
-            <CalendarDays size={13} />
-            Nuevo evento
-          </button>
-          <button
-            onClick={() => openNewTask(new Date(), false)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-lg hover:bg-gray-800 transition-colors"
-          >
-            <Plus size={13} />
-            Nueva tarea
           </button>
         </div>
       </div>
